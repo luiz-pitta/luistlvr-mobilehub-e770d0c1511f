@@ -13,6 +13,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
@@ -21,6 +22,7 @@ import android.os.SystemClock;
 import android.provider.Settings;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
 import com.infopae.model.SendActuatorData;
 import com.infopae.model.SendAnalyticsData;
 import com.infopae.model.SendSensorData;
@@ -35,6 +37,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import br.pucrio.inf.lac.mhub.components.AppConfig;
 import br.pucrio.inf.lac.mhub.components.AppUtils;
 import br.pucrio.inf.lac.mhub.components.MOUUID;
 import br.pucrio.inf.lac.mhub.models.locals.MatchmakingData;
@@ -57,6 +60,8 @@ import de.greenrobot.event.EventBus;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.schedulers.Schedulers;
+
+import static android.content.Context.MODE_PRIVATE;
 
 public class BLETechnology extends ResultReceiver implements Technology {
 	/** DEBUG */
@@ -197,12 +202,34 @@ public class BLETechnology extends ResultReceiver implements Technology {
 		else if( !mBluetoothAdapter.isEnabled() )
 			mBluetoothAdapter.enable();
 	}
-	
+
+	/**
+	 * Looks for the device structure and tries to connect
+	 */
+	private ArrayList<String> getAllUuidList() {
+		ArrayList<String> list = new ArrayList<>();
+		for (String key : mActiveRequest.keySet()) {
+			for (String key2 : mActiveRequest.get(key).keySet()) {
+				list.addAll(mActiveRequest.get(key).get(key2));
+			}
+		}
+		return list;
+	}
+
 	@Override
 	public void destroy() {
 		stopMonitoringRssiValue();
 		
 		ac.unregisterReceiver( mReceiver );
+
+		SharedPreferences sharedPrefs = ac.getSharedPreferences(AppConfig.SHARED_PREF_FILE, MODE_PRIVATE);
+		SharedPreferences.Editor editor = sharedPrefs.edit();
+		Gson gson = new Gson();
+
+		String json = gson.toJson(getAllUuidList());
+
+		editor.putString("list_disconnected", json);
+		editor.apply();
 
 		// unregister from event bus
 		EventBus.getDefault().unregister( this );
@@ -318,12 +345,25 @@ public class BLETechnology extends ResultReceiver implements Technology {
 	}
 
 	@SuppressWarnings("unused")
+	public void onEvent( String string ) {
+		if( string != null ) {
+			switch (string){
+				case "no_internet":
+					mAnalytics.clear();
+					mActiveRequest.clear();
+					break;
+			}
+		}
+	}
+
+	@SuppressWarnings("unused")
 	public void onEvent( MatchmakingData matchmakingData ) {
 		String uuidMatch = matchmakingData.getUuidMatch();
 		String macAddress = matchmakingData.getMacAddress();
 		String uuidData = matchmakingData.getUuidData();
 		String uuidClient = matchmakingData.getUuidClient();
 		String uuidClientAnalytics = matchmakingData.getUuidAnalyticsClient();
+		boolean ack = matchmakingData.isAck();
 
 		if(matchmakingData.getStartStop() == MatchmakingData.START) {
 
@@ -331,6 +371,9 @@ public class BLETechnology extends ResultReceiver implements Technology {
 				mAnalytics.putIfAbsent(uuidClientAnalytics, uuidClient);
 				uuidClient = uuidClientAnalytics;
 			}
+
+			if(ack)
+				EventBus.getDefault().post( "c" + uuidClient );
 
 			if (!mActiveRequest.containsKey(macAddress)) {
 				ConcurrentHashMap<String, ArrayList<String>> map = new ConcurrentHashMap<>();
@@ -358,11 +401,24 @@ public class BLETechnology extends ResultReceiver implements Technology {
 				uuidClient = uuidClientAnalytics;
 			}
 
+			if(ack)
+				EventBus.getDefault().post( "c" + uuidClient );
+
 			ConcurrentHashMap<String, ArrayList<String>> map = mActiveRequest.get(macAddress);
 			ArrayList<String> arrayList = map.get(uuidData);
 			if(arrayList.contains(uuidClient))
 				arrayList.remove(uuidClient);
 			map.put(uuidData, arrayList);
+		}else if(matchmakingData.getStartStop() == MatchmakingData.MODIFY){
+			if(mAnalytics.containsKey(uuidClientAnalytics))
+				mAnalytics.put(uuidClientAnalytics, uuidClient);
+			else{
+				ConcurrentHashMap<String, ArrayList<String>> map = mActiveRequest.get(macAddress);
+				ArrayList<String> arrayList = map.get(uuidData);
+				if(arrayList.contains(uuidClientAnalytics))
+					arrayList.remove(uuidClientAnalytics);
+				map.put(uuidData, arrayList);
+			}
 		}
 	}
 
@@ -648,9 +704,11 @@ public class BLETechnology extends ResultReceiver implements Technology {
 					listClients.add(client);
 			}
 
+
 			if(listClients.size() > 0) {
 				SendSensorData sendSensorData = new SendSensorData();
 				sendSensorData.setData(data);
+				sendSensorData.setInterval(TIME_UPDATE_REFRESH/1000);
 				sendSensorData.setUuidClients(listClients);
 
 				EventBus.getDefault().post(sendSensorData);
@@ -659,6 +717,7 @@ public class BLETechnology extends ResultReceiver implements Technology {
 			if(listAnalytics.size() > 0) {
 				SendAnalyticsData sendAnalyticsData = new SendAnalyticsData();
 				sendAnalyticsData.setData(data);
+				sendAnalyticsData.setInterval(TIME_UPDATE_REFRESH/1000);
 				sendAnalyticsData.setMacAddress(response.getMacAddress());
 				sendAnalyticsData.setUuid(response.getUuid());
 				sendAnalyticsData.setUuidClients(listAnalytics);
@@ -1015,12 +1074,29 @@ public class BLETechnology extends ResultReceiver implements Technology {
 			// Inform to the S2PA Service
 			listener.onMObjectDisconnected( mMOUUID, mServices );
 
+			SendSensorData sendSensorData = new SendSensorData();
+			sendSensorData.setData(null);
+            sendSensorData.setListData(null);
+			sendSensorData.setSource(SendSensorData.MOBILE_HUB);
+			sendSensorData.setUuidClients(getUuidList(mActiveRequest.get(macAddress)));
+
+			if(sendSensorData.getUuidClients().size() > 0)
+				EventBus.getDefault().post(sendSensorData);
+
             EventBus.getDefault().unregister( this );
 
 			Sensor sensor = new Sensor();
 			sensor.setName(Settings.Secure.getString(ac.getContentResolver(), Settings.Secure.ANDROID_ID));
 			sensor.setMacAddress(gatt.getDevice().getAddress());
 			removeSensorMobileHub(sensor);
+		}
+
+		private ArrayList<String> getUuidList(ConcurrentHashMap<String, ArrayList<String>> map){
+			ArrayList<String> list = new ArrayList<>();
+			for (String key : map.keySet()) {
+				list.addAll(map.get(key));
+			}
+			return list;
 		}
  	}
  	

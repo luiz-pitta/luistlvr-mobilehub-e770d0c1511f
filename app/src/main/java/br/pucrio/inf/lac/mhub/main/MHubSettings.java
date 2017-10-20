@@ -27,7 +27,13 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.Toast;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import com.infopae.model.SendSensorData;
+
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.UUID;
 
@@ -126,6 +132,23 @@ public class MHubSettings extends AppCompatActivity implements ListView.OnItemCl
     }
 
     private void handleResponse(Response response) {
+        SharedPreferences sharedPrefs = getSharedPreferences(AppConfig.SHARED_PREF_FILE, MODE_PRIVATE);
+        Gson gson = new Gson();
+        String json = sharedPrefs.getString("list_disconnected", null);
+        if(json != null) {
+            Type type = new TypeToken<ArrayList<String>>() {
+            }.getType();
+            ArrayList<String> arrayList = gson.fromJson(json, type);
+
+            if (arrayList.size() > 0) {
+                SendSensorData sendSensorData = new SendSensorData();
+                sendSensorData.setData(null);
+                sendSensorData.setListData(null);
+                sendSensorData.setSource(SendSensorData.MOBILE_HUB);
+                sendSensorData.setUuidClients(arrayList);
+                EventBus.getDefault().post(sendSensorData);
+            }
+        }
     }
 
     private void handleError(Throwable error) {

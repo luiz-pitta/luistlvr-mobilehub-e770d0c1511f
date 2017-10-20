@@ -458,6 +458,13 @@ public class ConnectionService extends Service {
 		}
 	}
 
+	@SuppressWarnings("unused")
+	public void onEvent( String string ) {
+		if( string != null ) {
+			createAndSendMsg( string, uuid );
+		}
+	}
+
     /**
      * The broadcast receiver for all the services, it will receive all the
      * updates from the location/mepa/s2pa service and send it to the gateway.
