@@ -1,13 +1,17 @@
 package br.pucrio.inf.lac.mhub.model_server;
 
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Model to store sensor information got from server
+ * @author Luiz Guilherme Pitta
+ */
 public class Sensor implements Serializable {
     private static final long serialVersionUID = 63L;
 
+    /** Attributes */
     private String name, macAddress;
     private String uuidSer, uuidData;
     private String uuidCali, uuidConf;
@@ -18,6 +22,7 @@ public class Sensor implements Serializable {
     private ArrayList<String> option_bytes;
     private ArrayList<Byte> enable;
 
+    /** Getters */
     public String getUuidSer() {
         return uuidSer;
     }
@@ -57,7 +62,9 @@ public class Sensor implements Serializable {
     public String getName() {
         return name;
     }
+    /** Getters */
 
+    /** Setters */
     public void setMacAddress(String macAddress) {
         this.macAddress = macAddress;
     }
@@ -85,4 +92,5 @@ public class Sensor implements Serializable {
     public void setValue(byte[] value) {
         this.value = value;
     }
+    /** Setters */
 }

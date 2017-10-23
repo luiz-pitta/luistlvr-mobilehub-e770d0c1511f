@@ -50,6 +50,7 @@ public class LocationService extends Service implements LocationListener {
 	/** The location manager */
 	private LocationManager lm;
 
+    /** Component to make server request */
     private CompositeDisposable mSubscriptions;
 
     /** Current location update interval */
@@ -108,7 +109,7 @@ public class LocationService extends Service implements LocationListener {
         registerBroadcasts();
 		// get location manager 
 		lm = (LocationManager) getSystemService( LOCATION_SERVICE );
-
+        // creates instance
         mSubscriptions = new CompositeDisposable();
 
 		// Configurations
@@ -123,6 +124,8 @@ public class LocationService extends Service implements LocationListener {
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
+
+        // updates mobile hub information into the server
         setMobileHubDisabled();
 
         AppUtils.logger( 'i', TAG, ">> DESTROYED" );
@@ -132,9 +135,14 @@ public class LocationService extends Service implements LocationListener {
         if( lm != null )
 		    lm.removeUpdates( this );
 
-        mSubscriptions.dispose();
+        // destroy component
+        if(mSubscriptions != null)
+            mSubscriptions.dispose();
 	}
 
+    /**
+     * The method used to logout connectivity provider user.
+     */
     private void setMobileHubDisabled() {
         Intent intent = new Intent("disable_mobile_hub");
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
@@ -145,8 +153,10 @@ public class LocationService extends Service implements LocationListener {
         return mBinder;
     }
 
-
-
+    /**
+     * The method used to register state in server of connectivity provider user.
+     * @param usr The new location object.
+     */
     private void registerLocation(User usr) {
 
         mSubscriptions.add(NetworkUtil.getRetrofit().setLocationMobileHub(usr)
@@ -155,9 +165,19 @@ public class LocationService extends Service implements LocationListener {
                 .subscribe(this::handleResponse,this::handleError));
     }
 
+    /**
+     * Callback called when updates user's state returns successfully.
+     *
+     * @param response user state.
+     */
     private void handleResponse(Response response) {
     }
 
+    /**
+     * Callback called when login returns with error.
+     *
+     * @param error returns the error.
+     */
     private void handleError(Throwable error) {
 
     }

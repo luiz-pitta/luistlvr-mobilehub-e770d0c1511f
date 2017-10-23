@@ -72,8 +72,10 @@ public class MHubSettings extends AppCompatActivity implements ListView.OnItemCl
     /** Progress dialog for disconnection */
     private ProgressDialog disconnectDialog;
 
+    /** Component to make server request */
     private CompositeDisposable mSubscriptions;
 
+    /** BroadcastReceiver to logout MobileHub from server */
     private BroadcastReceiver mMessageReceiverDisable = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -108,6 +110,9 @@ public class MHubSettings extends AppCompatActivity implements ListView.OnItemCl
         EventBus.getDefault().unregister( this );
     }
 
+    /**
+     * The method used to logout connectivity provider user.
+     */
     private void setMobileHubDisabled() {
         UUID uuid = AppUtils.getUuid( ac );
         SharedPreferences config = ac.getSharedPreferences( AppConfig.SHARED_PREF_FILE, MODE_PRIVATE );
@@ -123,6 +128,10 @@ public class MHubSettings extends AppCompatActivity implements ListView.OnItemCl
             registerLocation(user);
     }
 
+    /**
+     * The method used to register state in server of connectivity provider user.
+     * @param usr The new location object.
+     */
     private void registerLocation(User usr) {
 
         mSubscriptions.add(NetworkUtil.getRetrofit().setLocationMobileHub(usr)
@@ -131,6 +140,11 @@ public class MHubSettings extends AppCompatActivity implements ListView.OnItemCl
                 .subscribe(this::handleResponse,this::handleError));
     }
 
+    /**
+     * Callback called when updates user's state returns successfully.
+     *
+     * @param response user state.
+     */
     private void handleResponse(Response response) {
         SharedPreferences sharedPrefs = getSharedPreferences(AppConfig.SHARED_PREF_FILE, MODE_PRIVATE);
         Gson gson = new Gson();
@@ -151,6 +165,11 @@ public class MHubSettings extends AppCompatActivity implements ListView.OnItemCl
         }
     }
 
+    /**
+     * Callback called when login returns with error.
+     *
+     * @param error returns the error.
+     */
     private void handleError(Throwable error) {
 
     }

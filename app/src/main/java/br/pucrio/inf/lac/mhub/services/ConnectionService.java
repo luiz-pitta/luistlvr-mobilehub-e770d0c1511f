@@ -444,21 +444,21 @@ public class ConnectionService extends Service {
         //createAndQueueMsg( messageData, uuid );
     }
 
-	@SuppressWarnings("unused")
+	@SuppressWarnings("unused") // it's actually used to receive events from the Technology
 	public void onEvent( SendSensorData sendSensorData ) {
 		if( sendSensorData != null ) {
 			createAndSendMsg( sendSensorData, uuid );
 		}
 	}
 
-	@SuppressWarnings("unused")
+	@SuppressWarnings("unused") // it's actually used to receive events from the Technology
 	public void onEvent( SendAnalyticsData sendAnalyticsData ) {
 		if( sendAnalyticsData != null ) {
 			createAndSendMsg( sendAnalyticsData, uuid );
 		}
 	}
 
-	@SuppressWarnings("unused")
+	@SuppressWarnings("unused") // it's actually used to receive events from the Technology
 	public void onEvent( String string ) {
 		if( string != null ) {
 			createAndSendMsg( string, uuid );

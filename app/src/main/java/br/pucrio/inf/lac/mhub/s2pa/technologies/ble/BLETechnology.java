@@ -118,11 +118,13 @@ public class BLETechnology extends ResultReceiver implements Technology {
 	/** Flags */
 	private boolean autoConnect = false;
 
+	/** Component to make server request */
 	private CompositeDisposable mSubscriptions;
 	
 	/** defines (in milliseconds) how often RSSI should be updated */ 
     private final static int RSSI_UPDATE_TIME_INTERVAL = 1500; // 1.5 seconds
 
+	/** Calibration Data */
     private byte[] mCalibrationData = null;
 
 	/**
@@ -201,19 +203,6 @@ public class BLETechnology extends ResultReceiver implements Technology {
             throw new NullPointerException( "Technology not initialized" );
 		else if( !mBluetoothAdapter.isEnabled() )
 			mBluetoothAdapter.enable();
-	}
-
-	/**
-	 * Looks for the device structure and tries to connect
-	 */
-	private ArrayList<String> getAllUuidList() {
-		ArrayList<String> list = new ArrayList<>();
-		for (String key : mActiveRequest.keySet()) {
-			for (String key2 : mActiveRequest.get(key).keySet()) {
-				list.addAll(mActiveRequest.get(key).get(key2));
-			}
-		}
-		return list;
 	}
 
 	@Override
@@ -344,7 +333,7 @@ public class BLETechnology extends ResultReceiver implements Technology {
 		return false;
 	}
 
-	@SuppressWarnings("unused")
+	@SuppressWarnings("unused") // it's actually used to receive connection listner
 	public void onEvent( String string ) {
 		if( string != null ) {
 			switch (string){
@@ -356,7 +345,7 @@ public class BLETechnology extends ResultReceiver implements Technology {
 		}
 	}
 
-	@SuppressWarnings("unused")
+	@SuppressWarnings("unused") // it's actually used to receive connection listner
 	public void onEvent( MatchmakingData matchmakingData ) {
 		String uuidMatch = matchmakingData.getUuidMatch();
 		String macAddress = matchmakingData.getMacAddress();
@@ -422,6 +411,23 @@ public class BLETechnology extends ResultReceiver implements Technology {
 		}
 	}
 
+	/**
+	 * @return Returns all IoTrade users UUID that are registered to this analytics hub
+	 */
+	private ArrayList<String> getAllUuidList() {
+		ArrayList<String> list = new ArrayList<>();
+		for (String key : mActiveRequest.keySet()) {
+			for (String key2 : mActiveRequest.get(key).keySet()) {
+				list.addAll(mActiveRequest.get(key).get(key2));
+			}
+		}
+		return list;
+	}
+
+	/**
+	 * The method used update sensor information in the server.
+	 * @param sensor Sensor.
+	 */
 	private void updateSensorParameters(Sensor sensor) {
 
 		mSubscriptions.add(NetworkUtil.getRetrofit().setSensorParameters(sensor)
@@ -430,6 +436,10 @@ public class BLETechnology extends ResultReceiver implements Technology {
 				.subscribe(this::handleResponse,this::handleError));
 	}
 
+	/**
+	 * The method used remove sensor from mobile hub and updates its informatio in the server.
+	 * @param sensor Sensor.
+	 */
 	private void removeSensorMobileHub(Sensor sensor) {
 
 		mSubscriptions.add(NetworkUtil.getRetrofit().removeSensorMobileHub(sensor)
@@ -438,9 +448,19 @@ public class BLETechnology extends ResultReceiver implements Technology {
 				.subscribe(this::handleResponse,this::handleError));
 	}
 
+	/**
+	 * Callback called when updates or removes sensor.
+	 *
+	 * @param response message of success.
+	 */
     private void handleResponse(Response response) {
     }
 
+	/**
+	 * Callback called when login returns with error.
+	 *
+	 * @param error returns the error.
+	 */
     private void handleError(Throwable error) {
 
     }
@@ -602,8 +622,10 @@ public class BLETechnology extends ResultReceiver implements Technology {
 		private UUID mCalibration;
 		private TechnologySensor mSensor;
 
+		/** Last time event happened */
         private long mLastClickTime = 0;
 
+		/** Minimum time to update information */
         private static final long TIME_UPDATE_REFRESH = 10000;
         private static final long TIME_UPDATE_REFRESH2 = 5000;
  		
@@ -660,6 +682,11 @@ public class BLETechnology extends ResultReceiver implements Technology {
             sOperationsQueue.remove( mDevice );
  		}
 
+		/**
+		 * @param service uuid of service.
+		 * @param list list of sensors.
+		 * @return Returns position of sensor that matches the uuid
+		 */
  		private int isServiceIn(UUID service, ArrayList<Sensor> list){
 			for(int i = 0;i<list.size();i++){
 				Sensor sensor = list.get(i);
@@ -669,6 +696,11 @@ public class BLETechnology extends ResultReceiver implements Technology {
 			return -1;
 		}
 
+		/**
+		 * @param service uuid of service.
+		 * @param list list of sensors.
+		 * @return Returns true if the service uuid matches a actuator
+		 */
 		private boolean isActuator(UUID service, ArrayList<Sensor> list){
 			for(int i = 0;i<list.size();i++){
 				Sensor sensor = list.get(i);
@@ -678,6 +710,10 @@ public class BLETechnology extends ResultReceiver implements Technology {
 			return false;
 		}
 
+		/**
+		 * Receives raw array of bytes from device and converts
+		 * @param sensor sensor.
+		 */
         private void convertSensorData(Sensor sensor) {
 
             mSubscriptions.add(NetworkUtil.getRetrofit().convertSensorData(sensor)
@@ -686,10 +722,21 @@ public class BLETechnology extends ResultReceiver implements Technology {
                     .subscribe(this::handleResponseData,this::handleError));
         }
 
+		/**
+		 * Callback called when login returns with error.
+		 *
+		 * @param error returns the error.
+		 */
         private void handleError(Throwable error) {
 
         }
 
+		/**
+		 * Callback called when converts data successfully.
+		 *
+		 * @param response Returns the data converted and sends to Connection Service if there are IoTrade
+		 * registered in this connection provider.
+		 */
         private void handleResponseData(Response response) {
             Double[] data = response.getData();
 			ArrayList<String> list = mActiveRequest.get(response.getMacAddress()).get(response.getUuid());
@@ -727,15 +774,6 @@ public class BLETechnology extends ResultReceiver implements Technology {
 
             //if( data != null )
             //    listener.onMObjectValueRead( mMOUUID, mRSSI, getSensorCategory(list, response.getUuid()), data );
-        }
-
-        private String getSensorCategory(ArrayList<Sensor> list, String uuidData){
-            for(int i = 0;i < list.size(); i++){
-                String uuid = list.get(i).getUuidData();
-                if(uuid.equals(uuidData))
-                    return list.get(i).getName();
-            }
-            return null;
         }
 
         @Override
@@ -852,6 +890,11 @@ public class BLETechnology extends ResultReceiver implements Technology {
 			sendSensorValue( gatt, characteristic );
         }
 
+		/**
+		 * Get the byte array to enable a sensor in a device
+		 * @param byteList list of bytes
+		 * @return Returns converted byte array
+		 */
         private byte[] getEnableByteArray(List<Byte> byteList){
             Byte[] ENABLE_SENSOR;
 
@@ -908,7 +951,7 @@ public class BLETechnology extends ResultReceiver implements Technology {
         }
 
 		/**
-		 * Enables sensor and notifications of a service
+		 * Activates a actuator
 		 * @param gatt The Gatt connection in BLE
 		 * @param sensor The representation of the actuator
 		 */
@@ -934,7 +977,7 @@ public class BLETechnology extends ResultReceiver implements Technology {
 			queue( new BLEWrite( gatt, configuration, REMOTE_MODE ) );
 		}
 
-		@SuppressWarnings("unused")
+		@SuppressWarnings("unused")  // it's actually used to receive connection listner messages
 		public void onEvent( SendActuatorData sendActuatorData ) {
 			ArrayList<Sensor> arrayList = mDeviceModules.get(mGatt.getDevice().getName());
 			Sensor sensor = null;
@@ -950,8 +993,9 @@ public class BLETechnology extends ResultReceiver implements Technology {
 		}
 
 		/**
-		 * Enables sensor and notifications of a service
+		 * Execute a command to control an actuator
 		 * @param sensor The representation of the actuator
+		 * @param COMMAND The command (array of bytes) to the actuator
 		 */
 		private void executeCommandActuator( Sensor sensor, byte[] COMMAND ) {
 			// Get UUIDs of the service, data

@@ -12,10 +12,8 @@ import br.pucrio.inf.lac.mhub.components.AppUtils;
 import br.pucrio.inf.lac.mhub.model_server.Response;
 import br.pucrio.inf.lac.mhub.model_server.Sensor;
 import br.pucrio.inf.lac.mhub.model_server.SensorWrapper;
-import br.pucrio.inf.lac.mhub.model_server.User;
 import br.pucrio.inf.lac.mhub.models.DeviceModel;
 import br.pucrio.inf.lac.mhub.network.NetworkUtil;
-import br.pucrio.inf.lac.mhub.s2pa.base.TechnologyDevice;
 import de.greenrobot.event.EventBus;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
@@ -51,7 +49,10 @@ public class AdaptationService extends Service {
     public static final int FAILED  = 0;
     public static final int SUCCESS = 1;
 
+    /** Component to make server request */
     private CompositeDisposable mSubscriptions;
+
+    /** Component to send if device is ready to connect or not */
     private ResultReceiver receiver;
 
     /**
@@ -82,7 +83,7 @@ public class AdaptationService extends Service {
         EventBus.getDefault().register( this );
         // Configurations
         bootstrap();
-
+        // creates instance
         mSubscriptions = new CompositeDisposable();
 
         // if the service is killed by Android, service starts again
@@ -96,6 +97,7 @@ public class AdaptationService extends Service {
     public void onDestroy() {
         super.onDestroy();
         AppUtils.logger( 'i', TAG, ">> Destroyed" );
+        // destroy component
         if(mSubscriptions != null)
             mSubscriptions.dispose();
         // unregister from event bus
@@ -161,6 +163,10 @@ public class AdaptationService extends Service {
             receiver.send( FAILED, null );
     }
 
+    /**
+     * The method used to check if sensor is registered in database.
+     * @param sensor Sensor information.
+     */
     private void isSensorRegistered(Sensor sensor) {
 
         mSubscriptions.add(NetworkUtil.getRetrofit().getSensorRegistered(sensor)
@@ -169,6 +175,11 @@ public class AdaptationService extends Service {
                 .subscribe(this::handleResponse,this::handleError));
     }
 
+    /**
+     * Callback called when request returns successfully.
+     *
+     * @param response send message if device can connect or if it failed.
+     */
     private void handleResponse(Response response) {
         if(response.getMessage().equals("YES")) {
             Bundle resultData = new Bundle();
@@ -178,6 +189,11 @@ public class AdaptationService extends Service {
             receiver.send( FAILED, null );
     }
 
+    /**
+     * Callback called when login returns with error.
+     *
+     * @param error returns the error.
+     */
     private void handleError(Throwable error) {
 
     }

@@ -254,11 +254,10 @@ public class AppUtils {
 	}
 
 	/**
-	 * It gets the UUID saved inside the Shared Preferences.
+	 * It checks if device is online.
 	 *
 	 * @param c The Context of the Android system.
-	 * @return UUID It returns the UUID saved.
-	 *         null There is no UUID save inside the Shared Preferences.
+	 * @return true if device is online or false otherwise
 	 */
 	public  static boolean isDeviceOnline(Context c) {
 		ConnectivityManager connMgr =
@@ -268,11 +267,10 @@ public class AppUtils {
 	}
 
     /**
-     * It gets the UUID saved inside the Shared Preferences.
+     * It gets the intensity of internet signal.
      *
      * @param c The Context of the Android system.
-     * @return UUID It returns the UUID saved.
-     *         null There is no UUID save inside the Shared Preferences.
+     * @return Range from 0 to 10 depending of internet signal .
      */
     public static int getInternetSignal(Context c) {
         ConnectivityManager connManager = (ConnectivityManager) c.getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -319,10 +317,9 @@ public class AppUtils {
     }
 
     /**
-     * It gets the UUID saved inside the Shared Preferences.
+     * It gets the Battery Percentage of the device.
      *
-     * @return UUID It returns the UUID saved.
-     *         null There is no UUID save inside the Shared Preferences.
+     * @return Range from 0 to 100 depending of the Battery Percentage of the device.
      */
     public static int getBatteryPercentage(Context c) {
 
