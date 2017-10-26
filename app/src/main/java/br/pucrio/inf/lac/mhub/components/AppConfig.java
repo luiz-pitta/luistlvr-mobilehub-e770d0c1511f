@@ -148,36 +148,36 @@ public class AppConfig {
 	/* Default interval values to scan mobile objects (milliseconds), it is used by
 	 * the s2pa service.
 	 * 
-	 * HIGH   :: 20 seconds
-	 * MEDIUM :: 40 seconds
-	 * LOW    :: 1 minute
+	 * HIGH   :: 5 seconds
+	 * MEDIUM :: 15 seconds
+	 * LOW    :: 30 seconds
 	 */
-	public static final int DEFAULT_SCAN_INTERVAL_HIGH   = 1000 * 20;
-	public static final int DEFAULT_SCAN_INTERVAL_MEDIUM = 1000 * 40;
-	public static final int DEFAULT_SCAN_INTERVAL_LOW    = 1000 * 60;
-	
+	public static final int DEFAULT_SCAN_INTERVAL_HIGH   = 1000 * 5;
+	public static final int DEFAULT_SCAN_INTERVAL_MEDIUM = 1000 * 15;
+	public static final int DEFAULT_SCAN_INTERVAL_LOW    = 1000 * 30;
+
 	/* Default interval values to send messages (milliseconds), it is used by
 	 * the connection service.
 	 * 
-	 * HIGH   ::  30 seconds
-	 * MEDIUM ::  1 minute
-	 * LOW    ::  2 minutes
+	 * HIGH   ::  1.5 second
+	 * MEDIUM ::  2.5 seconds
+	 * LOW    ::  6 seconds
 	 */
-	public static final int DEFAULT_MESSAGES_INTERVAL_HIGH   = 1000 * 30;
-	public static final int DEFAULT_MESSAGES_INTERVAL_MEDIUM = 1000 * 60;
-	public static final int DEFAULT_MESSAGES_INTERVAL_LOW    = 1000 * 60 * 2;
+	public static final int DEFAULT_MESSAGES_INTERVAL_HIGH   = 500 * 3;
+	public static final int DEFAULT_MESSAGES_INTERVAL_MEDIUM = 500 * 5;
+	public static final int DEFAULT_MESSAGES_INTERVAL_LOW    = 500 * 4 * 3;
 	
 	/*
 	 * Default interval values to get a new location (milliseconds), it is used by
 	 * the location service.
 	 * 
-	 * HIGH   ::   1 minute
-	 * MEDIUM ::   4 minutes
-	 * LOW    ::  10 minutes
+	 * HIGH   ::  7 seconds
+	 * MEDIUM ::  25 seconds
+	 * LOW    ::  50 seconds
 	 */
-	public static final int DEFAULT_LOCATION_INTERVAL_HIGH   = 1000 * 60;
-	public static final int DEFAULT_LOCATION_INTERVAL_MEDIUM = 1000 * 60 * 4;
-	public static final int DEFAULT_LOCATION_INTERVAL_LOW    = 1000 * 60 * 10;
+	public static final int DEFAULT_LOCATION_INTERVAL_HIGH   = 1000 * 7;
+	public static final int DEFAULT_LOCATION_INTERVAL_MEDIUM = 1000 * 5 * 5;
+	public static final int DEFAULT_LOCATION_INTERVAL_LOW    = 1000 * 5 * 10;
 	
 	/*
 	 * Default value of delay to start the first scan (milliseconds)
@@ -249,7 +249,7 @@ public class AppConfig {
 	 * 
 	 * Default: onDevelopment --// not set //--
 	 */
-	public static final String DEFAULT_SDDL_IP_ADDRESS = "139.82.100.71";
+	public static final String DEFAULT_SDDL_IP_ADDRESS = "192.168.25.34";
 	
 	/*
 	 * Default value for the port used by the SDDL.

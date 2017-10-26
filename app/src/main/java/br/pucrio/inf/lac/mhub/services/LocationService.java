@@ -70,7 +70,7 @@ public class LocationService extends Service implements LocationListener {
     private static final int GPS_RATE = 4;
 
     /** Time difference threshold set for two minutes */
-    private static final int TIME_DIFFERENCE_THRESHOLD = 1 * 15 * 1000;
+    private static final int TIME_DIFFERENCE_THRESHOLD = 1 * 5 * 1000;
 
     /** This is the object that receives interactions from clients */
     private final IBinder mBinder = new LocalBinder();

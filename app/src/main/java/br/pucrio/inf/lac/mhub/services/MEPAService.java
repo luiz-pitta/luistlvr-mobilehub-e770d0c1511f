@@ -279,7 +279,8 @@ public class MEPAService extends Service {
      * Removes all the queries
      */
     private void clearRules() {
-        for( String label : mQueries.keySet() )
+
+        for( String label : Collections.list(mQueries.keys()) )
             removeRule( label );
     }
 
@@ -357,7 +358,7 @@ public class MEPAService extends Service {
      * Removes all the events
      */
     private void clearEvents() {
-        for( String label : mEvents.keySet() )
+        for( String label : Collections.list(mEvents.keys()) )
             removeEvent( label );
     }
 

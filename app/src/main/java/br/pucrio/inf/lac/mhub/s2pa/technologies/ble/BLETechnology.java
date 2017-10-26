@@ -31,6 +31,7 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Queue;
 import java.util.UUID;
@@ -234,7 +235,8 @@ public class BLETechnology extends ResultReceiver implements Technology {
 		sOperationsQueue.clear();
         sCurrentOperation = null;
 
-        for( String macAddress : mConnectedDevices.keySet() )
+
+        for( String macAddress : Collections.list(mConnectedDevices.keys()) )
             disconnect( macAddress );
 
         mConnectedDevices.clear();
@@ -416,11 +418,12 @@ public class BLETechnology extends ResultReceiver implements Technology {
 	 */
 	private ArrayList<String> getAllUuidList() {
 		ArrayList<String> list = new ArrayList<>();
-		for (String key : mActiveRequest.keySet()) {
-			for (String key2 : mActiveRequest.get(key).keySet()) {
+		for (String key : Collections.list(mActiveRequest.keys())) {
+			for (String key2 : Collections.list(mActiveRequest.get(key).keys())) {
 				list.addAll(mActiveRequest.get(key).get(key2));
 			}
 		}
+
 		return list;
 	}
 
@@ -1137,7 +1140,7 @@ public class BLETechnology extends ResultReceiver implements Technology {
 
 		private ArrayList<String> getUuidList(ConcurrentHashMap<String, ArrayList<String>> map){
 			ArrayList<String> list = new ArrayList<>();
-			for (String key : map.keySet()) {
+			for (String key : Collections.list(map.keys())) {
 				list.addAll(map.get(key));
 			}
 			return list;

@@ -5,6 +5,7 @@ import android.content.Context;
 import com.google.gson.Gson;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonElement;
+import com.infopae.model.SendAcknowledge;
 import com.infopae.model.SendActuatorData;
 import com.infopae.model.SendSensorData;
 
@@ -96,6 +97,9 @@ public class ConnectionListener implements NodeConnectionListener {
 		}else if(m.getContentObject() instanceof SendActuatorData) {
 			SendActuatorData sendActuatorData = (SendActuatorData) m.getContentObject();
 			EventBus.getDefault().post( sendActuatorData );
+		}else if(m.getContentObject() instanceof SendAcknowledge) {
+			SendAcknowledge sendAcknowledge = (SendAcknowledge) m.getContentObject();
+			EventBus.getDefault().post( "c" + sendAcknowledge.getUuidIoTrade() );
 		}
 	}
 
