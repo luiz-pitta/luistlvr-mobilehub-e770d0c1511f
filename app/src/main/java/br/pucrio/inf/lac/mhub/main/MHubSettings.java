@@ -46,6 +46,7 @@ import br.pucrio.inf.lac.mhub.model_server.User;
 import br.pucrio.inf.lac.mhub.models.ConnectionData;
 import br.pucrio.inf.lac.mhub.models.NavigationItem;
 import br.pucrio.inf.lac.mhub.network.NetworkUtil;
+import br.pucrio.inf.lac.mhub.services.ConnectionService;
 import br.pucrio.inf.lac.mhub.services.LocationService;
 import br.pucrio.inf.lac.mhub.services.S2PAService;
 import de.greenrobot.event.EventBus;
@@ -160,7 +161,7 @@ public class MHubSettings extends AppCompatActivity implements ListView.OnItemCl
                 sendSensorData.setListData(null);
                 sendSensorData.setSource(SendSensorData.MOBILE_HUB);
                 sendSensorData.setUuidClients(arrayList);
-                EventBus.getDefault().post(sendSensorData);
+                //EventBus.getDefault().post(sendSensorData);
             }
         }
     }
@@ -212,23 +213,34 @@ public class MHubSettings extends AppCompatActivity implements ListView.OnItemCl
         }
 
         final Intent iS2P = new Intent( MHubSettings.this, S2PAService.class );
+        Intent iConn = new Intent( ac, ConnectionService.class );
 
 		switch( item.getItemId() ) {
 			case R.id.service_state:
 				if( AppUtils.isMyServiceRunning( ac, S2PAService.class.getName() ) ) {
+
+                    setMobileHubDisabled();
+
 					item.setIcon( android.R.drawable.ic_media_play );
-                    // Show loading while disconnecting
-                    if( connState != null && connState.getState().equals( ConnectionData.CONNECTED ) ) {
-                        disconnectDialog = ProgressDialog.show(
-                                ac,
-                                "",
-                                getString( R.string.message_disconnecting )
-                        );
-                    }
+                     //Show loading while disconnecting
+                    //if( connState != null && connState.getState().equals( ConnectionData.CONNECTED ) ) {
+                    //    disconnectDialog = ProgressDialog.show(
+                    //            ac,
+                    //            "",
+                    //            getString( R.string.message_disconnecting )
+                    //    );
+                    //}
+
                     // Stop services
-					stopService( iS2P );
+                    stopService( iS2P );
+
 				} else {
 					item.setIcon( R.drawable.ic_media_stop );
+
+                    if( AppUtils.isMyServiceRunning( ac, ConnectionService.class.getName() ) )
+                        stopService( iConn );
+
+                    startService( iConn );
 				    startService( iS2P );
 				}
     			break;

@@ -20,6 +20,7 @@ import android.os.Handler;
 import android.os.ResultReceiver;
 import android.os.SystemClock;
 import android.provider.Settings;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
@@ -31,6 +32,7 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
 import java.util.Queue;
@@ -211,15 +213,6 @@ public class BLETechnology extends ResultReceiver implements Technology {
 		stopMonitoringRssiValue();
 		
 		ac.unregisterReceiver( mReceiver );
-
-		SharedPreferences sharedPrefs = ac.getSharedPreferences(AppConfig.SHARED_PREF_FILE, MODE_PRIVATE);
-		SharedPreferences.Editor editor = sharedPrefs.edit();
-		Gson gson = new Gson();
-
-		String json = gson.toJson(getAllUuidList());
-
-		editor.putString("list_disconnected", json);
-		editor.apply();
 
 		// unregister from event bus
 		EventBus.getDefault().unregister( this );
@@ -411,6 +404,15 @@ public class BLETechnology extends ResultReceiver implements Technology {
 				map.put(uuidData, arrayList);
 			}
 		}
+
+		SharedPreferences sharedPrefs = ac.getSharedPreferences(AppConfig.SHARED_PREF_FILE, MODE_PRIVATE);
+		SharedPreferences.Editor editor = sharedPrefs.edit();
+		Gson gson = new Gson();
+
+		String json = gson.toJson(getAllUuidList());
+
+		editor.putString("list_disconnected", json);
+		editor.apply();
 	}
 
 	/**
@@ -746,6 +748,9 @@ public class BLETechnology extends ResultReceiver implements Technology {
 			ArrayList<String> listAnalytics = new ArrayList<>();
 			ArrayList<String> listClients = new ArrayList<>();
 
+			Log.i( "Send sensor data", "Sending sensor data of: " + response.getMacAddress()
+					+ " and " +  response.getUuid() + " to " + list.size());
+
 			for(int i=0;i<list.size();i++){
 				String client = list.get(i);
 				if(mAnalytics.containsKey(client))
@@ -753,6 +758,8 @@ public class BLETechnology extends ResultReceiver implements Technology {
 				else
 					listClients.add(client);
 			}
+
+			Log.i( "Name of client", "Sending data to client: " + listClients);
 
 
 			if(listClients.size() > 0) {
@@ -801,6 +808,34 @@ public class BLETechnology extends ResultReceiver implements Technology {
 					else if(isSensorFound >= 0 && isActuator)
 						activate(gatt, listSensors.get(isSensorFound));
                 }
+
+				//Test of scalability
+				/*
+				ArrayList<String> uuidDatas = new ArrayList<>();
+				uuidDatas.add("f000aa11-0451-4000-b000-000000000000");
+				uuidDatas.add("f000aa41-0451-4000-b000-000000000000");
+				uuidDatas.add("f000aa31-0451-4000-b000-000000000000");
+				uuidDatas.add("f000aa01-0451-4000-b000-000000000000");
+				uuidDatas.add("f000aa21-0451-4000-b000-000000000000");
+
+				int tam = 500;
+				ArrayList<String> arrayList = new ArrayList<>();
+				for(int i=0;i<tam/5;i++){
+					arrayList.add("Teste"+i);
+				}
+				for(int i=0;i<5;i++){
+					if (!mActiveRequest.containsKey(macAddress)) {
+						ConcurrentHashMap<String, ArrayList<String>> map = new ConcurrentHashMap<>();
+						map.put(uuidDatas.get(i%5), arrayList);
+						mActiveRequest.put(macAddress, map);
+					} else {
+						ConcurrentHashMap<String, ArrayList<String>> map = mActiveRequest.get(macAddress);
+						map.put(uuidDatas.get(i%5), arrayList);
+						mActiveRequest.put(macAddress, map);
+					}
+				}
+				*///END Test of scalability
+
                 // Inform to the S2PA Service
              	listener.onMObjectServicesDiscovered( mMOUUID, mServices );
                 // Continue with the next operation
@@ -1127,8 +1162,10 @@ public class BLETechnology extends ResultReceiver implements Technology {
 			sendSensorData.setSource(SendSensorData.MOBILE_HUB);
 			sendSensorData.setUuidClients(getUuidList(mActiveRequest.get(macAddress)));
 
-			if(sendSensorData.getUuidClients().size() > 0)
+			if(sendSensorData.getUuidClients().size() > 0) {
 				EventBus.getDefault().post(sendSensorData);
+				Log.i( "Detect remove sensor", String.valueOf(Calendar.getInstance().getTimeInMillis()) );
+			}
 
             EventBus.getDefault().unregister( this );
 

@@ -199,8 +199,6 @@ public class S2PAService extends Service implements TechnologyListener {
         Intent iMonitor = new Intent( ac, NetworkMonitorService.class );
 
 		// stop all services
-        if( AppUtils.isMyServiceRunning( ac, ConnectionService.class.getName() ) )
-            stopService( iConn );
 
         if( AppUtils.isMyServiceRunning( ac, NetworkMonitorService.class.getName() ) )
             stopService( iMonitor );
@@ -216,7 +214,10 @@ public class S2PAService extends Service implements TechnologyListener {
 		
 		// start services
 		if( start ) {
-            startService( iConn );
+            //if( AppUtils.isMyServiceRunning( ac, ConnectionService.class.getName() ) )
+            //    stopService( iConn );
+
+            //startService( iConn );
 
             if( AppUtils.getCurrentLocationService( ac ) )
                 startService( iLoc );

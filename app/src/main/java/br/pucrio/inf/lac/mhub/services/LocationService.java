@@ -77,6 +77,9 @@ public class LocationService extends Service implements LocationListener {
 
     private UUID uuid;
 
+    /** latitude and longitude */
+    private double lat = -500, lng = -500;
+
 
 
     /**
@@ -125,9 +128,6 @@ public class LocationService extends Service implements LocationListener {
 	public void onDestroy() {
 		super.onDestroy();
 
-        // updates mobile hub information into the server
-        setMobileHubDisabled();
-
         AppUtils.logger( 'i', TAG, ">> DESTROYED" );
         // unregister broadcast
         unregisterBroadcasts();
@@ -139,14 +139,6 @@ public class LocationService extends Service implements LocationListener {
         if(mSubscriptions != null)
             mSubscriptions.dispose();
 	}
-
-    /**
-     * The method used to logout connectivity provider user.
-     */
-    private void setMobileHubDisabled() {
-        Intent intent = new Intent("disable_mobile_hub");
-        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
-    }
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -210,8 +202,15 @@ public class LocationService extends Service implements LocationListener {
         user.setLat(location.getLatitude());
         user.setLng(location.getLongitude());
         user.setActive(true);
+        if(lat != -500)
+            user.setVelocity(AppUtils.getDistanceFromLatLonInKm(lat, lng, user.getLat(), user.getLng()));
+        else
+            user.setVelocity(0);
 
         registerLocation(user);
+
+        lat = location.getLatitude();
+        lng = location.getLongitude();
 
         // Wait until we get a good enough location
         if( isBetterLocation( lastRegisteredLocation, location ) ) {
